@@ -2,32 +2,50 @@
 
 Dashboard trading AI dengan karyawan robot beranimasi di kantor virtual 3D.
 
-> **Mode: PAPER TRADING saja.** Tidak ada transaksi uang asli sampai sistem diuji dan diizinkan secara eksplisit.
+> **PAPER TRADING SAJA. Live trading dinonaktifkan** dan tidak bisa diaktifkan lewat konfigurasi
+> (`TRADING_MODE` selain `paper` membuat aplikasi gagal start).
 
-## Tim robot
+## Status jujur (apa yang benar-benar ada)
 
-| Robot | Tugas |
+| Bagian | Status |
 |---|---|
-| CEO | Memantau seluruh sistem |
-| Research | Mencari token (data GMGN bila akses tersedia) |
-| Analyst | Menganalisis harga, volume, likuiditas, aktivitas pasar |
-| Risk Manager | Menjalankan batas risiko dan stop-loss |
-| Trader | Mengelola jual-beli simulasi |
-| Accountant | Mencatat saldo, profit, dan loss |
+| Aturan top-10 holder (default 25%, bisa diatur) | Selesai, diuji |
+| Pengecekan keamanan token (authority, extension, transfer fee) | Selesai, diuji |
+| Simulasi jual gagal memblokir BUY | Selesai, diuji |
+| Likuiditas Raydium (lock hanya LOCKED bila terverifikasi) | Selesai, diuji |
+| Kebijakan developer pump.fun (<5 lolos, 5-10 review, >10 blokir) | Selesai, diuji |
+| Keputusan terpadu PASS / REVIEW_REQUIRED / BLOCKED / UNKNOWN | Selesai, diuji |
+| Mesin paper trading (fee, slippage, limit risiko, stop-loss, idempotensi, SQLite, audit berantai hash) | Selesai, diuji |
+| Konfigurasi `.env` tervalidasi | Selesai, diuji |
+| Provider data nyata (GMGN, Solana RPC, Raydium, pump.fun) | **Belum ada**; hanya antarmuka + data MOCK berlabel |
+| Backend FastAPI (REST + WebSocket) | **Belum ada** (paket belum bisa dipasang di sesi pengembangan) |
+| Frontend Next.js + kantor 3D 6 robot | **Belum ada** |
+
+Detail aturan: [docs/SECURITY_RULES.md](docs/SECURITY_RULES.md). Arsitektur: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+## Menjalankan tes
+
+Tidak butuh paket tambahan (hanya Python 3.11+):
+
+```
+python3 -m unittest discover -s tests -t .
+```
+
+Tes ditulis dengan `unittest` sehingga juga bisa dijalankan dengan `pytest`.
 
 ## Struktur
 
 ```
-frontend/        Antarmuka web ramah ponsel (kantor 3D + dashboard)
-backend/         API dan penjadwal, jalan terus di cloud
-trading-engine/  Logika agen, risiko, dan paper trading
-docs/            Dokumentasi arsitektur
+backend/app/            holder_analysis, security, liquidity_analysis, market_data, services, config
+trading-engine/         trading_engine: orders, paper_broker, portfolio, risk, audit, storage
+tests/                  tes otomatis
+docs/                   dokumentasi
+frontend/               (belum dibangun)
 ```
-
-Ketiga modul dipisah: frontend hanya bicara dengan backend lewat API.
 
 ## Aturan keamanan
 
-- Kunci API dan private key wallet tidak boleh ada di kode frontend atau di Git.
-- Semua rahasia ada di environment variable backend (lihat `.env.example`).
-- `TRADING_MODE` default `paper`. Mode live butuh persetujuan eksplisit.
+- Tidak ada private key wallet dan tidak ada kunci API di Git atau di frontend.
+- Data MOCK tidak pernah dianggap data produksi: ditolak kecuali `ALLOW_MOCK_DATA=true`, dan selalu berlabel `MOCK`.
+- Data yang hilang, basi, atau tidak lengkap menghasilkan `UNKNOWN` dan memblokir BUY.
+- Hasil keamanan dihitung deterministik; teks AI tidak boleh mengubah keputusan.

@@ -1,0 +1,6 @@
+# Needed for the FastAPI layer (NOT implemented yet). The security engine and trading engine
+# in this repository use only the Python standard library.
+fastapi
+uvicorn
+pydantic>=2
+httpx

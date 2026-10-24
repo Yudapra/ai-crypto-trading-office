@@ -1,27 +1,35 @@
 # Arsitektur
 
 ```
-[Frontend] --HTTP/WebSocket--> [Backend API] --> [Trading Engine]
-                                    |                  |
-                                 Database          Data pasar (GMGN, dll)
+[Frontend]  --(belum dibangun)-->  [Backend API]  --(belum dibangun)-->  ...
+                                         |
+        backend/app (sudah ada)          |        trading-engine (sudah ada)
+  ┌────────────────────────────────┐     |   ┌──────────────────────────────┐
+  │ market_data (antarmuka, MOCK)  │     └──►│ PaperBroker.submit()         │
+  │ security  (engine, policy)     │◄────────│   validasi → idempotensi     │
+  │ holder_analysis, liquidity_... │ SecurityGate  → harga → [BUY: gerbang │
+  │ services (gate, robots)        │         │   keamanan → risiko → dana]  │
+  └────────────────────────────────┘         │   → fill → SQLite + audit    │
+                                             └──────────────────────────────┘
 ```
 
-## Alur kerja robot
+## Aturan dependensi
 
-1. Research menemukan token kandidat.
-2. Analyst menilai harga, volume, likuiditas, aktivitas.
-3. Risk Manager menyetujui atau menolak berdasarkan batas risiko.
-4. Trader mengeksekusi order simulasi (paper).
-5. Accountant mencatat saldo, profit, loss.
-6. CEO memantau status semua robot dan menandai masalah.
+- `trading_engine` tidak mengimpor `backend`. Ia hanya mengenal antarmuka `SecurityGate` dan `PriceSource`.
+- `backend` mengimpor `trading_engine` (adapter `EngineSecurityGate`).
+- Satu-satunya jalur publik menuju fill adalah `PaperBroker.submit`. Tidak ada parameter untuk melewati gerbang keamanan.
+- `LiveExecutor` selalu melempar `LiveTradingDisabled`; `TRADING_MODE != paper` menghentikan startup.
+
+## Status robot
+
+`RobotRegistry` hanya berubah ketika service backend memanggil `update` setelah pekerjaan nyata (mis. Security Analyst menjadi
+`ANALYZING` saat evaluasi dimulai dan `COMPLETED`/`BLOCKED` sesuai keputusan). Robot yang tidak dilaporkan tetap `IDLE`.
 
 ## Tahap pembangunan
 
 1. Kerangka proyek (selesai)
-2. Trading engine paper: saldo, order simulasi, aturan risiko
-3. Backend API
-4. Dashboard ponsel sederhana
-5. Kantor 3D dan animasi robot
-6. Integrasi data pasar nyata
-7. Deploy cloud untuk operasi terus-menerus
-8. Evaluasi (live trading hanya setelah pengujian dan izin eksplisit)
+2. Mesin keamanan + paper trading + tes (selesai)
+3. Backend FastAPI: endpoint REST, WebSocket, autentikasi API key (belum)
+4. Provider data nyata setelah akses dan autentikasi diverifikasi (belum)
+5. Frontend Next.js + kantor 3D (belum)
+6. Deploy: frontend di host statis/serverless; API dan worker di host Python terpisah (belum)
