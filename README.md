@@ -17,9 +17,13 @@ Dashboard trading AI dengan karyawan robot beranimasi di kantor virtual 3D.
 | Keputusan terpadu PASS / REVIEW_REQUIRED / BLOCKED / UNKNOWN | Selesai, diuji |
 | Mesin paper trading (fee, slippage, limit risiko, stop-loss, idempotensi, SQLite, audit berantai hash) | Selesai, diuji |
 | Konfigurasi `.env` tervalidasi | Selesai, diuji |
-| Provider data nyata (GMGN, Solana RPC, Raydium, pump.fun) | **Belum ada**; hanya antarmuka + data MOCK berlabel |
-| Backend FastAPI (REST + WebSocket) | **Belum ada** (paket belum bisa dipasang di sesi pengembangan) |
-| Frontend Next.js + kantor 3D 6 robot | **Belum ada** |
+| API backend (REST, tanpa framework; `uvicorn app.asgi:app`), auth API key, CORS eksplisit, jadwal siklus | Selesai, diuji (tes unit + uji server uvicorn nyata dengan data MOCK) |
+| Aktivitas robot nyata (status robot + feed event dari backend) | Selesai, diuji |
+| Provider live: Solana RPC (authority, ekstensi token, saldo developer), Raydium (TVL, harga), pump.fun (opsional, tidak resmi) | Ditulis, diuji **hanya dengan fixture**; belum pernah memanggil layanan asli (jaringan sandbox memblokirnya) |
+| Sumber top-10 holder lengkap, simulasi jual (honeypot), verifikasi lock LP | **Belum ada** → pada mode live semua BUY berstatus UNKNOWN (diblokir) |
+| GMGN | **Belum ada adapter.** API resmi ada (kunci dari gmgn.ai/ai) tetapi path/parameter HTTP-nya tidak terdokumentasi di sumber yang bisa diakses; lihat [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md) |
+| Frontend Next.js + kantor 3D 6 robot (`frontend/`) | Kode ditulis; logika murni diuji. **Belum di-build/dijalankan** (npm tidak terjangkau) |
+
 
 Detail aturan: [docs/SECURITY_RULES.md](docs/SECURITY_RULES.md). Arsitektur: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
@@ -29,6 +33,7 @@ Tidak butuh paket tambahan (hanya Python 3.11+):
 
 ```
 python3 -m unittest discover -s tests -t .
+(cd frontend && npm test)     # logika murni frontend, Node 22+
 ```
 
 Tes ditulis dengan `unittest` sehingga juga bisa dijalankan dengan `pytest`.
@@ -40,7 +45,7 @@ backend/app/            holder_analysis, security, liquidity_analysis, market_da
 trading-engine/         trading_engine: orders, paper_broker, portfolio, risk, audit, storage
 tests/                  tes otomatis
 docs/                   dokumentasi
-frontend/               (belum dibangun)
+frontend/               Next.js + React Three Fiber (lihat frontend/README.md)
 ```
 
 ## Aturan keamanan
